@@ -110,9 +110,11 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          regs.insert(xed_decoded_inst_get_index_reg(ins, mem_idx));
 
          if (xed_decoded_inst_mem_read(ins, mem_idx)) {
-            regs_loads.push_back(regs);
-            memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
-            numLoads++;
+            if(xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_FAR){
+		regs_loads.push_back(regs);
+            	memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
+            	numLoads++;
+	    }
          }
 
          if (xed_decoded_inst_mem_written(ins, mem_idx)) {
