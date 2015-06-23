@@ -202,7 +202,10 @@ MicroOp::uop_subtype_t MicroOp::getSubtype(const MicroOp& uop)
    if (uop.isLoad())
       return UOP_SUBTYPE_LOAD;
    else if (uop.isStore())
-      return UOP_SUBTYPE_STORE;
+      if (uop.getInstructionOpcode() == XED_ICLASS_CALL_FAR)
+          return UOP_SUBTYPE_VFCPUSH;
+      else
+          return UOP_SUBTYPE_STORE;
    else if (uop.isBranch()) // conditional branches
       return UOP_SUBTYPE_BRANCH;
    else if (uop.isExecute())
@@ -222,6 +225,8 @@ String MicroOp::getSubtypeString(uop_subtype_t uop_subtype)
          return "load";
       case UOP_SUBTYPE_STORE:
          return "store";
+      case UOP_SUBTYPE_VFCPUSH:
+         return "vfcpush";
       case UOP_SUBTYPE_GENERIC:
          return "generic";
       case UOP_SUBTYPE_BRANCH:

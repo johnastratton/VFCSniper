@@ -437,6 +437,7 @@ CpContrType getCpContrType(const Windows::WindowEntry& entry)
                return CPCONTR_TYPE_LOAD_LX;
          }
       case MicroOp::UOP_SUBTYPE_STORE:
+      case MicroOp::UOP_SUBTYPE_VFCPUSH:
          return CPCONTR_TYPE_STORE;
       case MicroOp::UOP_SUBTYPE_GENERIC:
          return CPCONTR_TYPE_GENERIC;

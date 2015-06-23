@@ -110,11 +110,11 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          regs.insert(xed_decoded_inst_get_index_reg(ins, mem_idx));
 
          if (xed_decoded_inst_mem_read(ins, mem_idx)) {
+            regs_loads.push_back(regs);
+            memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
             if(xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_FAR){
-		regs_loads.push_back(regs);
-            	memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
-            	numLoads++;
-	    }
+               numLoads++;
+            }
          }
 
          if (xed_decoded_inst_mem_written(ins, mem_idx)) {
@@ -320,6 +320,12 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          size_t storeIndex = index - numLoads - numExecs;
          addSrcs(regs_stores[storeIndex], currentMicroOp);
          addAddrs(regs_stores[storeIndex], currentMicroOp);
+
+         // VFCPUSH
+         if ( currentMicroOp->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH ) {
+            addSrcs(regs_loads[0], currentMicroOp);
+            //addAddrs(regs_loads[0], currentMicroOp);
+         }
 
          if (numExecs == 0) {
             // No execute microop: we inherit its write operands
