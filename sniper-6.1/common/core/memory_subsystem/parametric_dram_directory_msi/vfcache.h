@@ -12,7 +12,7 @@ namespace ParametricDramDirectoryMSI
          //static const UInt32 SIM_PAGE_SHIFT = 12; // 4KB
          //static const IntPtr SIM_PAGE_SIZE = (1L << SIM_PAGE_SHIFT);
          //static const IntPtr SIM_PAGE_MASK = ~(SIM_PAGE_SIZE - 1);
-	 static const UInt32 SIM_LINE_SIZE = 0; //unsure what to put here yet 
+	 static const UInt32 SIM_LINE_SIZE = 8; //unsure what to put here yet 
 
          UInt32 m_size;
          UInt32 m_associativity;
