@@ -22,6 +22,7 @@ class ShmemPerf;
 namespace ParametricDramDirectoryMSI
 {
    class TLB;
+   class VFCACHE;
 
    typedef std::pair<core_id_t, MemComponent::component_t> CoreComponentType;
    typedef std::map<CoreComponentType, CacheCntlr*> CacheCntlrMap;
@@ -37,6 +38,7 @@ namespace ParametricDramDirectoryMSI
          AddressHomeLookup* m_tag_directory_home_lookup;
          AddressHomeLookup* m_dram_controller_home_lookup;
          TLB *m_itlb, *m_dtlb, *m_stlb;
+	 VFCACHE *m_vfc;
          ComponentLatency m_tlb_miss_penalty;
          bool m_tlb_miss_parallel;
 

@@ -4,6 +4,7 @@
 #include "nuca_cache.h"
 #include "dram_cache.h"
 #include "tlb.h"
+#include "vfcache.h"
 #include "simulator.h"
 #include "log.h"
 #include "dvfs_manager.h"
@@ -38,6 +39,7 @@ MemoryManager::MemoryManager(Core* core,
    m_dram_directory_cntlr(NULL),
    m_dram_cntlr(NULL),
    m_itlb(NULL), m_dtlb(NULL), m_stlb(NULL),
+   m_vfc(NULL),
    m_tlb_miss_penalty(NULL,0),
    m_tlb_miss_parallel(false),
    m_tag_directory_present(false),
@@ -80,6 +82,10 @@ MemoryManager::MemoryManager(Core* core,
          m_dtlb = new TLB("dtlb", "perf_model/dtlb", getCore()->getId(), dtlb_size, Sim()->getCfg()->getInt("perf_model/dtlb/associativity"), m_stlb);
       m_tlb_miss_penalty = ComponentLatency(core->getDvfsDomain(), Sim()->getCfg()->getInt("perf_model/tlb/penalty"));
       m_tlb_miss_parallel = Sim()->getCfg()->getBool("perf_model/tlb/penalty_parallel");
+
+      UInt32 vfc_size = 64;
+      UInt32 vfc_assoc = 4;
+      m_vfc = new VFCACHE("vfc", "perf_model/vfc", getCore()->getId(), vfc_size, vfc_assoc, NULL);
 
       smt_cores = Sim()->getCfg()->getInt("perf_model/core/logical_cpus");
 
