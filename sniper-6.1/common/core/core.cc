@@ -117,6 +117,11 @@ Core::~Core()
    delete m_network;
 }
 
+void Core::accessVFCache(IntPtr address)
+{
+    m_memory_manager->accessVFCache(address);
+}
+
 void Core::enablePerformanceModels()
 {
    getShmemPerfModel()->enable();
@@ -481,7 +486,6 @@ Core::accessMemory(lock_signal_t lock_signal, mem_op_t mem_op_type, IntPtr d_add
    else
       return initiateMemoryAccess(MemComponent::L1_DCACHE, lock_signal, mem_op_type, d_addr, (Byte*) data_buffer, data_size, modeled, eip, now);
 }
-
 
 MemoryResult
 Core::nativeMemOp(lock_signal_t lock_signal, mem_op_t mem_op_type, IntPtr d_addr, char* data_buffer, UInt32 data_size)

@@ -350,6 +350,10 @@ void IntervalTimer::issueMemOp(Windows::WindowEntry& micro_op)
       uint64_t latency = SubsecondTime::divideRounded(res.latency, m_core->getDvfsDomain()->getPeriod());
       micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + latency); // execlatency already contains bypass latency
       micro_op.getDynMicroOp()->setDCacheHitWhere(res.hit_where);
+      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
+	 m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
+      }
+     
    }
 }
 

@@ -61,6 +61,7 @@ namespace ParametricDramDirectoryMSI
          static CacheCntlrMap m_all_cache_cntlrs;
 
          void accessTLB(TLB * tlb, IntPtr address, bool isIfetch, Core::MemModeled modeled);
+	 void accessVFCache(IntPtr address);
 
       public:
          MemoryManager(Core* core, Network* network, ShmemPerfModel* shmem_perf_model);

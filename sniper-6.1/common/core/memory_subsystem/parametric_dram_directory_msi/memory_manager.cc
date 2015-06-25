@@ -613,6 +613,21 @@ MemoryManager::accessTLB(TLB * tlb, IntPtr address, bool isIfetch, Core::MemMode
    }
 }
 
+void
+MemoryManager::accessVFCache(IntPtr address)
+{
+   bool hit = m_vfc->lookup(address, getShmemPerfModel()->getElapsedTime(ShmemPerfModel::_USER_THREAD), true);
+   if (hit == false
+      // && !(modeled == Core::MEM_MODELED_NONE || modeled == Core::MEM_MODELED_COUNT)
+       && m_tlb_miss_penalty.getLatency() != SubsecondTime::Zero()
+   )
+   {
+       PseudoInstruction *i = new TLBMissInstruction(m_tlb_miss_penalty.getLatency(), false);
+       getCore()->getPerformanceModel()->queuePseudoInstruction(i);
+   }
+   return;
+}
+
 SubsecondTime
 MemoryManager::getCost(MemComponent::component_t mem_component, CachePerfModel::CacheAccess_t access_type)
 {

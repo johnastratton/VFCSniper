@@ -42,6 +42,8 @@ class MemoryManagerBase
       {}
       virtual ~MemoryManagerBase() {}
 
+      virtual void accessVFCache(IntPtr address){ return; }
+
       virtual HitWhere::where_t coreInitiateMemoryAccess(
             MemComponent::component_t mem_component,
             Core::lock_signal_t lock_signal,
