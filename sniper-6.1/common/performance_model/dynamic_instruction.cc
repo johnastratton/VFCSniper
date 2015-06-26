@@ -5,7 +5,6 @@
 #include "branch_predictor.h"
 #include "performance_model.h"
 #include "micro_op.h" //added
-//#include "vfcache.h" //added
 
 Allocator* DynamicInstruction::createAllocator()
 {
@@ -62,9 +61,12 @@ void DynamicInstruction::accessMemory(Core *core)
          memory_info[idx].hit_where = res.hit_where;
 	 //add vfcache lookup
 	 const std::vector<const MicroOp*> *uops = instruction->getMicroOps();
-	 const MicroOp uop = *uops->at(0);
-	 if (uop.getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
-	    core->accessVFCache(memory_info[idx].addr);
+	// const MicroOp uop = *uops->at(0);
+	 for ( uint32_t i = 0; i < uops->size(); ++i){
+	    const MicroOp uop = *uops->at(i);
+	    if (uop.getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
+	       core->accessVFCache(memory_info[idx].addr);
+	    }
          }
       }
       else

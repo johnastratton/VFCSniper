@@ -83,9 +83,9 @@ MemoryManager::MemoryManager(Core* core,
       m_tlb_miss_penalty = ComponentLatency(core->getDvfsDomain(), Sim()->getCfg()->getInt("perf_model/tlb/penalty"));
       m_tlb_miss_parallel = Sim()->getCfg()->getBool("perf_model/tlb/penalty_parallel");
 
-      UInt32 vfc_size = 64;
-      UInt32 vfc_assoc = 4;
-      m_vfc = new VFCACHE("vfc", "perf_model/vfc", getCore()->getId(), vfc_size, vfc_assoc, NULL);
+      UInt32 vfc_size = Sim()->getCfg()->getInt("perf_model/vfc/size");
+      if (vfc_size)
+         m_vfc = new VFCACHE("vfc", "perf_model/vfc", getCore()->getId(), vfc_size, Sim()->getCfg()->getInt("perf_model/vfc/associativity"), NULL);
 
       smt_cores = Sim()->getCfg()->getInt("perf_model/core/logical_cpus");
 
@@ -436,6 +436,7 @@ MemoryManager::coreInitiateMemoryAccess(
       accessTLB(m_itlb, address, true, modeled);
    else if (mem_component == MemComponent::L1_DCACHE && m_dtlb)
       accessTLB(m_dtlb, address, false, modeled);
+   //accessVFCache(address); //just to test output
 
    return m_cache_cntlrs[mem_component]->processMemOpFromCore(
          lock_signal,

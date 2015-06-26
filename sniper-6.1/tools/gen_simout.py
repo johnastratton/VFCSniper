@@ -98,6 +98,21 @@ def generate_simout(jobid = None, resultsdir = None, partial = None, output = sy
         ('    miss rate', '%s.missrate'%tlb, lambda v: '%.2f%%' % v),
         ('    mpki', '%s.mpki'%tlb, lambda v: '%.2f' % v),
       ])
+  
+  template += [
+    ('VFCache Summary', '', ''),
+  ]
+  if 'vfc.access' in results:
+    results['vfc.missrate'] = map(lambda (a,b): 100*a/float(b or 1), zip(results['vfc.miss'], results['vfc.access']))
+    results['vfc.mpki'] = map(lambda (a,b): 1000*a/float(b or 1), zip(results['vfc.miss'], results['performance_model.instruction_count']))
+    template.extend([
+      ('  VFCache', '', ''),
+      ('    num accesses', 'vfc.access', str),
+      ('    num misses', 'vfc.miss', str),
+      ('    miss rate', 'vfc.missrate', lambda v: '%.2f%%' % v),
+      ('    mpki', 'vfc.mpki', lambda v: '%.2f' % v),
+    ])
+ 
 
   template += [
     ('Cache Summary', '', ''),
