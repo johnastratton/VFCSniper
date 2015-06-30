@@ -95,7 +95,7 @@ void MicroOp::makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t
    this->setTypes();
 }
 
-void MicroOp::makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size) {
+void MicroOp::makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectCall) {
    this->uop_type = UOP_STORE;
    this->microOpTypeOffset = offset;
    this->memoryAccessSize = mem_size;
@@ -104,6 +104,7 @@ void MicroOp::makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t
 #endif
    this->instructionOpcode = instructionOpcode;
    this->intraInstructionDependencies = num_execute;
+   this->isIC = isIndirectCall;
    this->setTypes();
 }
 
@@ -199,14 +200,22 @@ MicroOp::uop_subtype_t MicroOp::getSubtype(const MicroOp& uop)
 {
    // Count all of the ADD/SUB/DIV/LD/ST/BR, and if we have too many, break
    // Count all of the GENERIC insns, and if we have too many (3x-per-cycle), break
+   
+   //if (uop.getInstructionOpcode() == XED_ICLASS_CALL_FAR ||
+   //    uop.getInstructionOpcode() == XED_ICLASS_CALL_NEAR ){
+   //    printf("Handling a CALL_FAR instruction...\n");
+   //}
    if (uop.isLoad())
       return UOP_SUBTYPE_LOAD;
-   else if (uop.isStore())
-      if (uop.getInstructionOpcode() == XED_ICLASS_CALL_FAR)
+   else if (uop.isStore()) {
+      //printf("Handling a STORE uop...\n");
+      if (uop.isIndirectCall()){
+	  //printf("A uop was classified as VFCPUSH \n");
           return UOP_SUBTYPE_VFCPUSH;
+      }
       else
           return UOP_SUBTYPE_STORE;
-   else if (uop.isBranch()) // conditional branches
+   } else if (uop.isBranch()) // conditional branches
       return UOP_SUBTYPE_BRANCH;
    else if (uop.isExecute())
       return getSubtype_Exec(uop);

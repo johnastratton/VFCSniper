@@ -100,6 +100,8 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
    int numExecs = 0;
    int numStores = 0;
 
+   bool isIndirectCall = false;
+
    // Ignore memory-referencing operands in NOP instructions
    if (!xed_decoded_inst_get_attribute(ins, XED_ATTRIBUTE_NOP))
    {
@@ -112,9 +114,12 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          if (xed_decoded_inst_mem_read(ins, mem_idx)) {
             regs_loads.push_back(regs);
             memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
-            if(xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_FAR){
+            if(xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_FAR &&
+               xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_NEAR ){
                numLoads++;
-            }
+            } else {
+	       isIndirectCall = true;
+	    }
          }
 
          if (xed_decoded_inst_mem_written(ins, mem_idx)) {
@@ -232,7 +237,11 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
    {
 
       MicroOp *currentMicroOp = new MicroOp();
+
+      /* Extra information on all micro ops */
       currentMicroOp->setInstructionPointer(Memory::make_access(address));
+      currentMicroOp->setOperandSize(operand_size);
+      currentMicroOp->setInstruction(ins_ptr);
 
       // We don't necessarily know the address at this point as it could
       // be dependent on register values.  Therefore, fill it in at simulation time.
@@ -267,6 +276,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
                , memop_store_size[storeIndex]
+	       , isIndirectCall
                );
          if (is_atomic)
             currentMicroOp->setMemBarrier(true);
@@ -323,7 +333,8 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
 
          // VFCPUSH
          if ( currentMicroOp->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH ) {
-            addSrcs(regs_loads[0], currentMicroOp);
+	    //printf("VFCPUSH ");
+            addSrcs(regs_loads[0], currentMicroOp); //commented out to identify if adding these sources is causing error, didn't fix it
             //addAddrs(regs_loads[0], currentMicroOp);
          }
 
@@ -337,12 +348,6 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          if (is_atomic)
             currentMicroOp->setMemBarrier(true);
       }
-
-
-      /* Extra information on all micro ops */
-
-      currentMicroOp->setOperandSize(operand_size);
-      currentMicroOp->setInstruction(ins_ptr);
 
 
       /* Extra information of first micro op */

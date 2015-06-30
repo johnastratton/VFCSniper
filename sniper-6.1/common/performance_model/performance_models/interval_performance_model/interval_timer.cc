@@ -338,21 +338,29 @@ void IntervalTimer::issueMemOp(Windows::WindowEntry& micro_op)
    if ((micro_op.getMicroOp()->isLoad() || micro_op.getMicroOp()->isStore())
       && micro_op.getDynMicroOp()->getDCacheHitWhere() == HitWhere::UNKNOWN)
    {
-      MemoryResult res = m_core->accessMemory(
-         Core::NONE,
-         micro_op.getMicroOp()->isLoad() ? Core::READ : Core::WRITE,
-         micro_op.getDynMicroOp()->getAddress().address,
-         NULL,
-         micro_op.getMicroOp()->getMemoryAccessSize(),
-         Core::MEM_MODELED_RETURN,
-         micro_op.getMicroOp()->getInstruction() ? micro_op.getMicroOp()->getInstruction()->getAddress() : static_cast<uint64_t>(NULL)
-      );
-      uint64_t latency = SubsecondTime::divideRounded(res.latency, m_core->getDvfsDomain()->getPeriod());
-      micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + latency); // execlatency already contains bypass latency
-      micro_op.getDynMicroOp()->setDCacheHitWhere(res.hit_where);
-      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
-	 m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
+      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH /*&& micro_op.getMicroOp()->isIndirectCall()*/){
+	 printf("Trying to access VFCache, interval_timer \n");
+         m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
+	 micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + 1);
+         micro_op.getDynMicroOp()->setDCacheHitWhere(HitWhere::PREDICATE_FALSE);
       }
+      else {
+         MemoryResult res = m_core->accessMemory(
+            Core::NONE,
+            micro_op.getMicroOp()->isLoad() ? Core::READ : Core::WRITE,
+            micro_op.getDynMicroOp()->getAddress().address,
+            NULL,
+            micro_op.getMicroOp()->getMemoryAccessSize(),
+            Core::MEM_MODELED_RETURN,
+            micro_op.getMicroOp()->getInstruction() ? micro_op.getMicroOp()->getInstruction()->getAddress() : static_cast<uint64_t>(NULL)
+         );
+         uint64_t latency = SubsecondTime::divideRounded(res.latency, m_core->getDvfsDomain()->getPeriod());
+         micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + latency); // execlatency already contains bypass latency
+         micro_op.getDynMicroOp()->setDCacheHitWhere(res.hit_where);
+      }
+      //if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
+	// m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
+      //}
      
    }
 }

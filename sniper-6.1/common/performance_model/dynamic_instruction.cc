@@ -44,7 +44,16 @@ void DynamicInstruction::accessMemory(Core *core)
 {
    for(UInt8 idx = 0; idx < num_memory; ++idx)
    {
-      if (memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN)
+      const std::vector<const MicroOp*> *uops = instruction->getMicroOps();
+      const MicroOp uop = *uops->at(0);
+      if (memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN && uop.isIndirectCall() /*&& memory_info[idx].dir == Operand::READ*/)
+      {
+	 printf("Trying to access VFCache, dynins \n");
+	 core->accessVFCache(memory_info[idx].addr);
+	 memory_info[idx].latency = 1 * core->getDvfsDomain()->getPeriod(); // 1 cycle latency
+         memory_info[idx].hit_where = HitWhere::L1_OWN; //L1_OWN indicates LI DCACHE as a placeholder
+      }
+      else if (memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN)
       {
          MemoryResult res = core->accessMemory(
             /*instruction.isAtomic()
@@ -60,14 +69,14 @@ void DynamicInstruction::accessMemory(Core *core)
          memory_info[idx].latency = res.latency;
          memory_info[idx].hit_where = res.hit_where;
 	 //add vfcache lookup
-	 const std::vector<const MicroOp*> *uops = instruction->getMicroOps();
+	// const std::vector<const MicroOp*> *uops = instruction->getMicroOps();
 	// const MicroOp uop = *uops->at(0);
-	 for ( uint32_t i = 0; i < uops->size(); ++i){
-	    const MicroOp uop = *uops->at(i);
-	    if (uop.getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
-	       core->accessVFCache(memory_info[idx].addr);
-	    }
-         }
+	// for ( uint32_t i = 0; i < uops->size(); ++i){
+	//    const MicroOp uop = *uops->at(i);
+	//    if (uop.getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
+	//       core->accessVFCache(memory_info[idx].addr);
+	//    }
+        // }
       }
       else
       {

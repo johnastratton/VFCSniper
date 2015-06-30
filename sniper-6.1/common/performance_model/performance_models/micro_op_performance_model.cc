@@ -181,6 +181,9 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
    size_t load_base_index = SIZE_MAX;
    // Find the first store
    size_t store_base_index = SIZE_MAX;
+
+   bool isIndirect = false;
+
    for (size_t m = 0 ; m < m_current_uops.size() ; m++ )
    {
       if (m_current_uops[m]->getMicroOp()->isExecute())
@@ -198,6 +201,12 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
          ++num_loads;
          if (load_base_index == SIZE_MAX)
             load_base_index = m;
+      }
+      if (m_current_uops[m]->getMicroOp()->isIndirectCall()) 
+      {
+	 isIndirect = true;
+	 if (load_base_index == SIZE_MAX)
+	    load_base_index = store_base_index;
       }
    }
 
@@ -227,6 +236,16 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
    if (m_issue_memops)
       dynins->accessMemory(getCore());
 
+   //bool isIndirect = false;
+   //bool isIndirect = m_current_uops[0]->getMicroOp()->isIndirectCall();
+   //for( uint32_t i = 0; i < m_current_uops.size(); ++i){
+   //   if (!m_current_uops[i]->getMicroOp()->isIndirectCall()){
+   //      isIndirect = true;
+   //      break;
+   //   }
+   //}
+
+
    // If we haven't gotten all of our read or write data yet, iterate over the operands
    for (size_t i = 0 ; i < ops.size() ; ++i)
    {
@@ -250,11 +269,25 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
          //   FIXME: although the microop is squashed and its latency ignored, the cache still sees the access
          IntPtr cache_line = info.addr & ~63; // FIXME: hard-coded cache line size
 
+	 //bool isIndirect = false;
+	 //bool isIndirect = m_current_uops[0]->getMicroOp()->isIndirectCall();
+	 //for( uint32_t i = 0; i < m_current_uops.size(); ++i){
+	 //   if (!m_current_uops[i]->getMicroOp()->isIndirectCall()){
+	 //	isIndirect = true;
+	 //	break;
+	 //   }
+	 //}
+
+	 //if (isIndirect) {/*printf("An indirect call was detected %d \n", isIndirect);*/}
          if (o.m_direction == Operand::READ)
          {
             // Operand::READ
 
-            if (load_base_index != SIZE_MAX)
+	    //printf("Read operand and isIndirect is %d \n", isIndirect);
+
+            if (load_base_index != SIZE_MAX && 
+                m_current_uops[load_base_index+num_reads_done]->getMicroOp()->isIndirectCall()) {}
+            else if (load_base_index != SIZE_MAX)
             {
                size_t load_index = load_base_index + num_reads_done;
 
@@ -314,12 +347,12 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
                m_current_uops[store_index]->setDCacheHitWhere(info.hit_where);
                ++num_writes_done;
             }
-            else
+	    else
             {
                LOG_PRINT_ERROR("Write operand count mismatch");
             }
-
          }
+	 //else { printf("An indirect call was detected \n"); }
       }
       else
       {
@@ -333,8 +366,10 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
 
    // Make sure there was an Operand/MemoryInfo for each MicroOp
    // This should detect mismatches between decoding as done by fillOperandListMemOps and InstructionDecoder
-   assert(num_reads_done == num_loads);
-   assert(num_writes_done == num_stores);
+   if (!isIndirect){
+      assert(num_reads_done == num_loads);
+      assert(num_writes_done == num_stores);
+   }
 
    SubsecondTime insn_cost = SubsecondTime::Zero();
 

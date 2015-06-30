@@ -120,6 +120,9 @@ struct MicroOp
    /** Is this instruction a branch ? */
    bool branch;
 
+   /** Is this instruction an indirect call ? */
+   bool isIC;
+
    /** Debug info about the microOperation. */
 #ifdef ENABLE_MICROOP_STRINGS
    String debugInfo;
@@ -132,7 +135,7 @@ struct MicroOp
 
    void makeLoad(uint32_t offset, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size);
    void makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, bool isBranch);
-   void makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size);
+   void makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectCall);
    void makeDynamic(const String& instructionOpcodeName, uint32_t execLatency);
 
    static uop_subtype_t getSubtype_Exec(const MicroOp& uop);
@@ -184,6 +187,7 @@ struct MicroOp
    void setInstructionPointer(const Memory::Access& ip) { this->instructionPointer = ip; }
 
    bool isBranch() const { return this->branch; }
+   bool isIndirectCall() const { return this->isIC; }
 
    bool isInterrupt() const { return this->interrupt; }
    void setInterrupt(bool interrupt) { this->interrupt = interrupt; }
