@@ -338,11 +338,11 @@ void IntervalTimer::issueMemOp(Windows::WindowEntry& micro_op)
    if ((micro_op.getMicroOp()->isLoad() || micro_op.getMicroOp()->isStore())
       && micro_op.getDynMicroOp()->getDCacheHitWhere() == HitWhere::UNKNOWN)
    {
-      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH /*&& micro_op.getMicroOp()->isIndirectCall()*/){
-	 printf("Trying to access VFCache, interval_timer \n");
+      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
+	 //printf("Trying to access VFCache, interval_timer \n");
          m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
 	 micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + 1);
-         micro_op.getDynMicroOp()->setDCacheHitWhere(HitWhere::PREDICATE_FALSE);
+         micro_op.getDynMicroOp()->setDCacheHitWhere(HitWhere::L1_OWN);
       }
       else {
          MemoryResult res = m_core->accessMemory(
