@@ -33,6 +33,7 @@ DynamicMicroOpNehalem::uop_port_t DynamicMicroOpNehalem::getPort(const MicroOp *
          return DynamicMicroOpNehalem::UOP_PORT2;
       case MicroOp::UOP_SUBTYPE_STORE:
       case MicroOp::UOP_SUBTYPE_VFCPUSH:
+      case MicroOp::UOP_SUBTYPE_VFLOAD:
          return DynamicMicroOpNehalem::UOP_PORT34;
       case MicroOp::UOP_SUBTYPE_GENERIC:
          switch(uop->getInstructionOpcode()) {

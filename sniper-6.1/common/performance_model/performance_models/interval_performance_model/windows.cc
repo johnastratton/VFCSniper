@@ -423,6 +423,7 @@ CpContrType getCpContrType(const Windows::WindowEntry& entry)
       case MicroOp::UOP_SUBTYPE_FP_MULDIV:
          return CPCONTR_TYPE_FP_MULDIV;
       case MicroOp::UOP_SUBTYPE_LOAD:
+      case MicroOp::UOP_SUBTYPE_VFLOAD:
          switch(entry.getDynMicroOp()->getDCacheHitWhere()) {
             case HitWhere::L1_OWN:
                return CPCONTR_TYPE_LOAD_L1;

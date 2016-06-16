@@ -85,6 +85,7 @@ MicroOpPerformanceModel::MicroOpPerformanceModel(Core *core, bool issue_memops)
          , XED_ICLASS_INVALID // opcode
          , "invalid"  // instructionName
          , 8
+         , false
       );
       m_memaccess_uop->setMemBarrier(true);
       m_memaccess_uop->setFirst(true);
@@ -202,11 +203,9 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
          if (load_base_index == SIZE_MAX)
             load_base_index = m;
       }
-      if (m_current_uops[m]->getMicroOp()->isIndirectCall()) 
+      if (m_current_uops[m]->getMicroOp()->isIndirectJump()) 
       {
 	 isIndirect = true;
-	 if (load_base_index == SIZE_MAX)
-	    load_base_index = store_base_index;
       }
    }
 
@@ -285,9 +284,10 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
 
 	    //printf("Read operand and isIndirect is %d \n", isIndirect);
 
+	    //TODO: still bail if VFC
             if (load_base_index != SIZE_MAX && 
-                m_current_uops[load_base_index+num_reads_done]->getMicroOp()->isIndirectCall()) {}
-            else if (load_base_index != SIZE_MAX)
+                m_current_uops[load_base_index+num_reads_done]->getMicroOp()->isIndirectJump()) { }
+            if (load_base_index != SIZE_MAX)
             {
                size_t load_index = load_base_index + num_reads_done;
 
@@ -296,12 +296,14 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
                LOG_ASSERT_ERROR(m_current_uops[load_index]->getMicroOp()->isLoad(),
                                 "Expected uop %d to be a load.", load_index);
 
-               if (std::find(m_cache_lines_read.begin(), m_cache_lines_read.end(), cache_line) != m_cache_lines_read.end())
-               {
-                  m_current_uops[load_index]->squash(&m_current_uops);
-                  do_squashing = true;
+               if (!m_current_uops[load_index]->getMicroOp()->isIndirectJump()) {
+                  if (std::find(m_cache_lines_read.begin(), m_cache_lines_read.end(), cache_line) != m_cache_lines_read.end())
+                  {
+                     m_current_uops[load_index]->squash(&m_current_uops);
+                     do_squashing = true;
+                  }
+                  m_cache_lines_read.push_back(cache_line);
                }
-               m_cache_lines_read.push_back(cache_line);
 
                // Update this uop with load latencies
                UInt64 bypass_latency = m_core_model->getBypassLatency(m_current_uops[load_index]);
@@ -312,7 +314,7 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
                m_current_uops[load_index]->setDCacheHitWhere(info.hit_where);
                ++num_reads_done;
             }
-            else
+            else if (!isIndirect)
             {
                LOG_PRINT_ERROR("Read operand count mismatch");
             }

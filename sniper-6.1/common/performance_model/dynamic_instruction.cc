@@ -44,17 +44,17 @@ void DynamicInstruction::accessMemory(Core *core)
 {
    for(UInt8 idx = 0; idx < num_memory; ++idx)
    {
-      bool hasVFC = false;
+      bool hasVFA = false;
       const std::vector<const MicroOp*> *uops = instruction->getMicroOps();
       for ( uint32_t i = 0; i < uops->size(); ++i){
             const MicroOp uop = *uops->at(i);
-            if (uop.isIndirectCall() && memory_info[idx].dir == Operand::READ){
-		hasVFC = true;
+            if (uop.isIndirectJump() && memory_info[idx].dir == Operand::READ){
+		hasVFA = true;
 		break;
 	    }
       }
 
-      if(memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN && hasVFC){
+      if(memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN && hasVFA){
 	 //printf("Trying to access VFCache, dynins \n");
 	 core->accessVFCache(memory_info[idx].addr);
          memory_info[idx].latency = 1 * core->getDvfsDomain()->getPeriod(); // 1 cycle latency

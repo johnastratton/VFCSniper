@@ -71,7 +71,7 @@ MicroOp::MicroOp()
 #endif
 }
 
-void MicroOp::makeLoad(uint32_t offset, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size) {
+void MicroOp::makeLoad(uint32_t offset, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectJump) {
    this->uop_type = UOP_LOAD;
    this->microOpTypeOffset = offset;
    this->memoryAccessSize = mem_size;
@@ -80,6 +80,7 @@ void MicroOp::makeLoad(uint32_t offset, xed_iclass_enum_t instructionOpcode, con
 #endif
    this->instructionOpcode = instructionOpcode;
    this->intraInstructionDependencies = 0;
+   this->isIJ = isIndirectJump;
    this->setTypes();
 }
 
@@ -95,7 +96,7 @@ void MicroOp::makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t
    this->setTypes();
 }
 
-void MicroOp::makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectCall) {
+void MicroOp::makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectJump) {
    this->uop_type = UOP_STORE;
    this->microOpTypeOffset = offset;
    this->memoryAccessSize = mem_size;
@@ -104,7 +105,7 @@ void MicroOp::makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t
 #endif
    this->instructionOpcode = instructionOpcode;
    this->intraInstructionDependencies = num_execute;
-   this->isIC = isIndirectCall;
+   this->isIJ = isIndirectJump;
    this->setTypes();
 }
 
@@ -205,11 +206,16 @@ MicroOp::uop_subtype_t MicroOp::getSubtype(const MicroOp& uop)
    //    uop.getInstructionOpcode() == XED_ICLASS_CALL_NEAR ){
    //    printf("Handling a CALL_FAR instruction...\n");
    //}
-   if (uop.isLoad())
-      return UOP_SUBTYPE_LOAD;
-   else if (uop.isStore()) {
+   if (uop.isLoad()){
+      if (uop.isIndirectJump()){
+	  //printf("A uop was classified as VFCPUSH \n");
+          return UOP_SUBTYPE_VFLOAD;
+      }
+      else
+          return UOP_SUBTYPE_LOAD;
+   } else if (uop.isStore()) {
       //printf("Handling a STORE uop...\n");
-      if (uop.isIndirectCall()){
+      if (uop.isIndirectJump()){
 	  //printf("A uop was classified as VFCPUSH \n");
           return UOP_SUBTYPE_VFCPUSH;
       }
@@ -232,6 +238,8 @@ String MicroOp::getSubtypeString(uop_subtype_t uop_subtype)
          return "fp_muldiv";
       case UOP_SUBTYPE_LOAD:
          return "load";
+      case UOP_SUBTYPE_VFLOAD:
+         return "vfload";
       case UOP_SUBTYPE_STORE:
          return "store";
       case UOP_SUBTYPE_VFCPUSH:

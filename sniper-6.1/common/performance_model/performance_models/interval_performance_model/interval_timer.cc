@@ -338,7 +338,8 @@ void IntervalTimer::issueMemOp(Windows::WindowEntry& micro_op)
    if ((micro_op.getMicroOp()->isLoad() || micro_op.getMicroOp()->isStore())
       && micro_op.getDynMicroOp()->getDCacheHitWhere() == HitWhere::UNKNOWN)
    {
-      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH){
+      if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH ||
+          micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFLOAD){
 	 //printf("Trying to access VFCache, interval_timer \n");
          m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
 	 micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + 1);

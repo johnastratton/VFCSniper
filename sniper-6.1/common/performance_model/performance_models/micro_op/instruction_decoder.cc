@@ -88,6 +88,22 @@ unsigned int InstructionDecoder::getNumExecs(const xed_decoded_inst_t *ins, int 
  ///// IMPLEMENTATION OF INSTRUCTIONS /////
 //////////////////////////////////////////
 
+bool isCall(const xed_decoded_inst_t *ins) {
+   xed_iclass_enum_t ic = xed_decoded_inst_get_iclass(ins);
+   return (ic == XED_ICLASS_CALL_FAR || ic == XED_ICLASS_CALL_NEAR);
+}
+
+bool isJump(const xed_decoded_inst_t *ins) {
+   xed_iclass_enum_t ic = xed_decoded_inst_get_iclass(ins);
+   return (ic == XED_ICLASS_JB || ic == XED_ICLASS_JBE || ic == XED_ICLASS_JL ||
+           ic == XED_ICLASS_JLE || ic == XED_ICLASS_JMP || ic == XED_ICLASS_JMP_FAR ||
+           ic == XED_ICLASS_JNB || ic == XED_ICLASS_JNBE || ic == XED_ICLASS_JNL ||
+           ic == XED_ICLASS_JNLE || ic == XED_ICLASS_JNO || ic == XED_ICLASS_JNP ||
+           ic == XED_ICLASS_JNS || ic == XED_ICLASS_JNZ || ic == XED_ICLASS_JO ||
+           ic == XED_ICLASS_JP || ic == XED_ICLASS_JRCXZ || ic == XED_ICLASS_JS ||
+           ic == XED_ICLASS_JZ);
+}
+
 const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, const xed_decoded_inst_t *ins, Instruction *ins_ptr)
 {
    // Determine register dependencies and number of microops per type
@@ -100,7 +116,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
    int numExecs = 0;
    int numStores = 0;
 
-   bool isIndirectCall = false;
+   bool isIndirectJmp = false;
 
    // Ignore memory-referencing operands in NOP instructions
    if (!xed_decoded_inst_get_attribute(ins, XED_ATTRIBUTE_NOP))
@@ -114,11 +130,13 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          if (xed_decoded_inst_mem_read(ins, mem_idx)) {
             regs_loads.push_back(regs);
             memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
-            if(xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_FAR &&
-               xed_decoded_inst_get_iclass(ins) != XED_ICLASS_CALL_NEAR ){
+            //First option - Jump -> VFLoad
+            //               Call -> VFCall
+            if(!isCall(ins)) {
                numLoads++;
-            } else {
-	       isIndirectCall = true;
+            }
+            if (isCall(ins) || isJump(ins)) {
+	       isIndirectJmp = true;
 	    }
          }
 
@@ -254,7 +272,10 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
                , memop_load_size[loadIndex]
+               , isIndirectJmp
                );
+         if (isIndirectJmp)
+            printf("VFLoad index %d\n", index);
       }
       else if (index < numLoads + numExecs) /* EXEC */
       {
@@ -276,7 +297,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
                , memop_store_size[storeIndex]
-	       , isIndirectCall
+	       , isIndirectJmp
                );
          if (is_atomic)
             currentMicroOp->setMemBarrier(true);
