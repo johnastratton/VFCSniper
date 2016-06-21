@@ -206,6 +206,7 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
       if (m_current_uops[m]->getMicroOp()->isIndirectJump()) 
       {
 	 isIndirect = true;
+         load_base_index = m;
       }
    }
 
@@ -285,15 +286,15 @@ void MicroOpPerformanceModel::handleInstruction(DynamicInstruction *dynins)
 	    //printf("Read operand and isIndirect is %d \n", isIndirect);
 
 	    //TODO: still bail if VFC
-            if (load_base_index != SIZE_MAX && 
-                m_current_uops[load_base_index+num_reads_done]->getMicroOp()->isIndirectJump()) { }
+            //if (load_base_index != SIZE_MAX && 
+            //    m_current_uops[load_base_index+num_reads_done]->getMicroOp()->isIndirectJump()) { }
             if (load_base_index != SIZE_MAX)
             {
                size_t load_index = load_base_index + num_reads_done;
 
                LOG_ASSERT_ERROR(load_index < m_current_uops.size(),
                                 "Expected load_index(%x) to be less than uops.size()(%d).", load_index, m_current_uops.size());
-               LOG_ASSERT_ERROR(m_current_uops[load_index]->getMicroOp()->isLoad(),
+               LOG_ASSERT_ERROR( (m_current_uops[load_index]->getMicroOp()->isLoad() || m_current_uops[load_index]->getMicroOp()->isIndirectJump()),
                                 "Expected uop %d to be a load.", load_index);
 
                if (!m_current_uops[load_index]->getMicroOp()->isIndirectJump()) {

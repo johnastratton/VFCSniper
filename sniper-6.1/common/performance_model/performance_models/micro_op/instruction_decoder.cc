@@ -135,10 +135,12 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
             //                Call -> VFCall
             if (!isCall(ins) && !isJump(ins)) {
                numLoads++;
-	    } else if (isJump(ins)) {
+	    }
+            if (isJump(ins)) {
 	       isIndirect = true;
 	       isIndirectJmp = true;
-            } else {
+            }
+            if (isCall(ins)) {
 	       isIndirect = true;
             }
          }
@@ -275,7 +277,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
                , memop_load_size[loadIndex]
-               , false); //isIndirectJmp);
+               , isIndirectJmp);
       }
       else if (index < numLoads + numExecs) /* EXEC */
       {
@@ -349,7 +351,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          if ( currentMicroOp->getSubtype() == MicroOp::UOP_SUBTYPE_VFCJUMP ) {
 	    //printf("VFCJUMP ");
             addSrcs(regs_loads[0], currentMicroOp); //commented out to identify if adding these sources is causing error, didn't fix it
-            //addAddrs(regs_loads[0], currentMicroOp);
+            addAddrs(regs_loads[0], currentMicroOp);
          }
       }
 

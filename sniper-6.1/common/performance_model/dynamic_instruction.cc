@@ -55,10 +55,9 @@ void DynamicInstruction::accessMemory(Core *core)
       }
 
       if(memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN && hasVFA){
-	 //printf("Trying to access VFCache, dynins \n");
 	 core->accessVFCache(memory_info[idx].addr);
          memory_info[idx].latency = 1 * core->getDvfsDomain()->getPeriod(); // 1 cycle latency
-         memory_info[idx].hit_where = HitWhere::L1_OWN; //L1_OWN indicates LI DCACHE as a placeholder
+         memory_info[idx].hit_where = HitWhere::PREDICATE_FALSE; //L1_OWN indicates L1 DCACHE as a placeholder
       }
       else if (memory_info[idx].executed && memory_info[idx].hit_where == HitWhere::UNKNOWN)
       {
