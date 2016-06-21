@@ -443,6 +443,7 @@ CpContrType getCpContrType(const Windows::WindowEntry& entry)
       case MicroOp::UOP_SUBTYPE_GENERIC:
          return CPCONTR_TYPE_GENERIC;
       case MicroOp::UOP_SUBTYPE_BRANCH:
+      case MicroOp::UOP_SUBTYPE_VFCJUMP:
          return CPCONTR_TYPE_BRANCH;
       default:
          LOG_PRINT_ERROR("Unknown uop_subtype %d", uop.getSubtype());

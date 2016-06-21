@@ -335,11 +335,13 @@ void IntervalTimer::issueMemOp(Windows::WindowEntry& micro_op)
    // - not at all if all memory operations are issued at fetch (perf_model/core/interval_timer/issue_memops_at_dispatch == false)
    // - from blockWindow for overlapping accesses
    // - from dispatchInstruction otherwise
-   if ((micro_op.getMicroOp()->isLoad() || micro_op.getMicroOp()->isStore())
-      && micro_op.getDynMicroOp()->getDCacheHitWhere() == HitWhere::UNKNOWN)
+   if ((micro_op.getMicroOp()->isLoad() || micro_op.getMicroOp()->isStore() || 
+           micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCJUMP)
+       && micro_op.getDynMicroOp()->getDCacheHitWhere() == HitWhere::UNKNOWN)
    {
       if (micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCPUSH ||
-          micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFLOAD){
+          micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFCJUMP ||
+          micro_op.getMicroOp()->getSubtype() == MicroOp::UOP_SUBTYPE_VFLOAD) {
 	 //printf("Trying to access VFCache, interval_timer \n");
          m_core->accessVFCache(micro_op.getDynMicroOp()->getAddress().address);
 	 micro_op.getDynMicroOp()->setExecLatency(micro_op.getDynMicroOp()->getExecLatency() + 1);

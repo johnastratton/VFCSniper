@@ -84,7 +84,7 @@ void MicroOp::makeLoad(uint32_t offset, xed_iclass_enum_t instructionOpcode, con
    this->setTypes();
 }
 
-void MicroOp::makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, bool isBranch) {
+void MicroOp::makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, bool isBranch, bool isIndirectJmp) {
    this->uop_type = UOP_EXECUTE;
    this->microOpTypeOffset = offset;
    this->intraInstructionDependencies = num_loads;
@@ -93,6 +93,7 @@ void MicroOp::makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t
    this->instructionOpcodeName = instructionOpcodeName;
 #endif
    this->branch = isBranch;
+   this->isIJ = isIndirectJmp;
    this->setTypes();
 }
 
@@ -221,9 +222,14 @@ MicroOp::uop_subtype_t MicroOp::getSubtype(const MicroOp& uop)
       }
       else
           return UOP_SUBTYPE_STORE;
-   } else if (uop.isBranch()) // conditional branches
-      return UOP_SUBTYPE_BRANCH;
-   else if (uop.isExecute())
+   } else if (uop.isBranch()) { // conditional branches
+      if (uop.isIndirectJump()){
+	  //printf("A uop was classified as VFCPUSH \n");
+          return UOP_SUBTYPE_VFCJUMP;
+      }
+      else
+          return UOP_SUBTYPE_BRANCH;
+   } else if (uop.isExecute())
       return getSubtype_Exec(uop);
    else
       return UOP_SUBTYPE_GENERIC;
@@ -248,6 +254,8 @@ String MicroOp::getSubtypeString(uop_subtype_t uop_subtype)
          return "generic";
       case UOP_SUBTYPE_BRANCH:
          return "branch";
+      case UOP_SUBTYPE_VFCJUMP:
+         return "vfcjump";
       default:
          LOG_ASSERT_ERROR(false, "Unknown UopType %u", uop_subtype);
          return "unknown";

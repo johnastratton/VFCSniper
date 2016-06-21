@@ -71,6 +71,7 @@ struct MicroOp
       UOP_SUBTYPE_VFCPUSH,
       UOP_SUBTYPE_GENERIC,
       UOP_SUBTYPE_BRANCH,
+      UOP_SUBTYPE_VFCJUMP,
       UOP_SUBTYPE_SIZE,
    };
    uop_subtype_t uop_subtype;
@@ -135,7 +136,7 @@ struct MicroOp
    uint16_t memoryAccessSize;
 
    void makeLoad(uint32_t offset, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectJump);
-   void makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, bool isBranch);
+   void makeExecute(uint32_t offset, uint32_t num_loads, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, bool isBranch, bool isIndirectJmp);
    void makeStore(uint32_t offset, uint32_t num_execute, xed_iclass_enum_t instructionOpcode, const String& instructionOpcodeName, uint16_t mem_size, bool isIndirectCall);
    void makeDynamic(const String& instructionOpcodeName, uint32_t execLatency);
 

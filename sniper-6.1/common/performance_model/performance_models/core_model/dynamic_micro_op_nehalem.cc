@@ -136,6 +136,7 @@ DynamicMicroOpNehalem::uop_port_t DynamicMicroOpNehalem::getPort(const MicroOp *
                return DynamicMicroOpNehalem::UOP_PORT015;
          }
       case MicroOp::UOP_SUBTYPE_BRANCH:
+      case MicroOp::UOP_SUBTYPE_VFCJUMP:
          return DynamicMicroOpNehalem::UOP_PORT5;
       default:
          LOG_PRINT_ERROR("Unknown uop_subtype %u", uop->uop_subtype);

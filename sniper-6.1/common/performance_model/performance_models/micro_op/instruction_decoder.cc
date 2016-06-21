@@ -116,6 +116,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
    int numExecs = 0;
    int numStores = 0;
 
+   bool isIndirect = false;
    bool isIndirectJmp = false;
 
    // Ignore memory-referencing operands in NOP instructions
@@ -130,14 +131,16 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          if (xed_decoded_inst_mem_read(ins, mem_idx)) {
             regs_loads.push_back(regs);
             memop_load_size.push_back(xed_decoded_inst_get_memory_operand_length(ins, mem_idx));
-            //First option - Jump -> VFLoad
-            //               Call -> VFCall
-            if(!isCall(ins)) {
+            //Second option - Jump -> VFJump
+            //                Call -> VFCall
+            if (!isCall(ins) && !isJump(ins)) {
                numLoads++;
-            }
-            if (isCall(ins) || isJump(ins)) {
+	    } else if (isJump(ins)) {
+	       isIndirect = true;
 	       isIndirectJmp = true;
-	    }
+            } else {
+	       isIndirect = true;
+            }
          }
 
          if (xed_decoded_inst_mem_written(ins, mem_idx)) {
@@ -272,10 +275,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
                , memop_load_size[loadIndex]
-               , isIndirectJmp
-               );
-         if (isIndirectJmp)
-            printf("VFLoad index %d\n", index);
+               , false); //isIndirectJmp);
       }
       else if (index < numLoads + numExecs) /* EXEC */
       {
@@ -286,7 +286,8 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , numLoads
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
-               , xed_decoded_inst_get_category(ins) == XED_CATEGORY_COND_BR /* is conditional branch? */);
+               , xed_decoded_inst_get_category(ins) == XED_CATEGORY_COND_BR /* is conditional branch? */
+               , isIndirectJmp);
       }
       else /* STORE */
       {
@@ -297,7 +298,7 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
                , xed_decoded_inst_get_iclass(ins)
                , xed_iclass_enum_t2str(xed_decoded_inst_get_iclass(ins))
                , memop_store_size[storeIndex]
-	       , isIndirectJmp
+	       , isIndirect
                );
          if (is_atomic)
             currentMicroOp->setMemBarrier(true);
@@ -343,6 +344,12 @@ const std::vector<const MicroOp*>* InstructionDecoder::decode(IntPtr address, co
          {
             // In this case, we have a memory to XMM load, where the result merges the source and destination
             addSrcs(regs_dst, currentMicroOp);
+         }
+
+         if ( currentMicroOp->getSubtype() == MicroOp::UOP_SUBTYPE_VFCJUMP ) {
+	    //printf("VFCJUMP ");
+            addSrcs(regs_loads[0], currentMicroOp); //commented out to identify if adding these sources is causing error, didn't fix it
+            //addAddrs(regs_loads[0], currentMicroOp);
          }
       }
 
